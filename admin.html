@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel - GEN-Z-LIBRARY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-color: #4c6ef5;
+            --secondary-color: #f39c12;
+            --accent-color: #2c3e50;
+            --background-dark: #2c3e50;
+            --text-light: #ecf0f1;
+            --text-dark: #34495e;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body.dark-mode {
+            background-color: var(--background-dark);
+            color: var(--text-light);
+        }
+
+        .section-card {
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .section-card:hover {
+            transform: scale(1.05);
+        }
+
+        /* Header adjustments */
+        header {
+            transition: background-color 0.3s ease;
+        }
+
+        header .logo {
+            color: var(--text-dark);
+        }
+
+        body.dark-mode header .logo {
+            color: var(--text-light);
+        }
+
+        body.light-mode header .logo {
+            color: #1e2a36;
+        }
+    </style>
+</head>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const loginForm = document.getElementById('login-form');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const errorMessage = document.getElementById('error-message');
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+
+            const user = auth.currentUser;
+
+            if (user.email === "admin@example.com") {  // Check for admin's email
+                window.location.href = "admin-dashboard.html";  // Redirect to admin panel
+            } else {
+                errorMessage.textContent = "You do not have admin access.";
+                errorMessage.classList.remove('hidden');
+            }
+        } catch (error) {
+            errorMessage.textContent = "Invalid email or password.";
+            errorMessage.classList.remove('hidden');
+        }
+    });
+
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "admin-login.html";  // Redirect to login page if not logged in
+        }
+    });
+
+    const toggleTheme = () => {
+        const currentMode = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+        document.body.classList.toggle('dark-mode', currentMode === 'light');
+    };
+
+    const exportData = () => {
+        const books = JSON.parse(localStorage.getItem("books")) || [];
+        const devs = JSON.parse(localStorage.getItem("devs")) || [];
+
+        const data = {
+            books,
+            devs
+        };
+
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "GEN-Z-LIBRARY-EXPORT.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+<body class="dark-mode">
+
+    <header class="bg-primary-color text-white p-6 shadow-md flex justify-between items-center">
+        <h1 class="text-3xl font-bold logo">Admin Panel - GEN-Z-LIBRARY</h1>
+        <button id="theme-toggle" onclick="toggleTheme()" class="bg-indigo-600 p-2 rounded-full hover:bg-indigo-700">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                <path d="M12 6c-3.313 0-6 2.687-6 6s2.687 6 6 6 6-2.687 6-6-2.687-6-6-6zm0 10c-2.211 0-4-1.789-4-4s1.789-4 4-4 4 1.789 4 4-1.789 4-4 4zm-1-14h2v4h-2zm0 14h2v4h-2z"></path>
+            </svg>
+        </button>
+    </header>
+
+    <div class="container mx-auto py-10 px-6">
+
+        <!-- Admin Login Section -->
+        <div id="login-container" class="max-w-md mx-auto p-6 bg-white shadow-lg rounded-lg">
+            <h2 class="text-center text-2xl font-semibold mb-4">Admin Login</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <input type="email" id="email" class="w-full p-3 border rounded-lg" placeholder="Email" required />
+                </div>
+                <div class="mb-4">
+                    <input type="password" id="password" class="w-full p-3 border rounded-lg" placeholder="Password" required />
+                </div>
+                <div class="flex justify-center">
+                    <button type="submit" class="bg-primary-color text-white py-3 px-8 rounded-full hover:bg-indigo-700">
+                        Log In
+                    </button>
+                </div>
+            </form>
+            <p id="error-message" class="text-center text-red-500 mt-4 hidden">Invalid email or password.</p>
+        </div>
+
+        <!-- Book Sections to Edit -->
+        <section class="bg-secondary-color text-white p-6 rounded-xl shadow-lg mb-6">
+            <h2 class="text-2xl font-semibold mb-4">Add/Edit Books</h2>
+            <form id="book-form" class="space-y-4">
+                <div class="mb-4">
+                    <label for="section" class="text-lg">Select Section</label>
+                    <select id="section" class="w-full p-3 border rounded-lg bg-white text-black">
+                        <option value="class-9-10">Class 9-10</option>
+                        <option value="class-11-12">Class 11-12</option>
+                        <option value="jee">JEE</option>
+                        <option value="neet">NEET</option>
+                        <option value="competitive">Competitive Exams</option>
+                        <option value="tech-coding">Technology & Coding</option>
+                        <option value="general-knowledge">General Knowledge</option>
+                        <option value="science">Science</option>
+                    </select>
+                </div>
+
+                <!-- Book Details -->
+                <div class="mb-4">
+                    <label for="book-name" class="text-lg">Book Name</label>
+                    <input type="text" id="book-name" class="w-full p-3 border rounded-lg" placeholder="Enter Book Name" required />
+                </div>
+                <div class="mb-4">
+                    <label for="book-author" class="text-lg">Author</label>
+                    <input type="text" id="book-author" class="w-full p-3 border rounded-lg" placeholder="Enter Author Name" required />
+                </div>
+                <div class="mb-4">
+                    <label for="download-link" class="text-lg">Download Link</label>
+                    <input type="url" id="download-link" class="w-full p-3 border rounded-lg" placeholder="Enter Download Link" required />
+                </div>
+                
+                <!-- Upload Cover Image -->
+                <div class="mb-4">
+                    <label for="cover-image" class="text-lg">Cover Image</label>
+                    <input type="file" id="cover-image" class="w-full p-3 border rounded-lg" accept="image/*" required />
+                </div>
+
+                <!-- Tags -->
+                <div class="mb-4">
+                    <label for="tags" class="text-lg">Tags</label>
+                    <input type="text" id="tags" class="w-full p-3 border rounded-lg" placeholder="Enter Tags (comma separated)" />
+                </div>
+
+                <div class="flex justify-center">
+                    <button type="submit" class="bg-primary-color text-white py-3 px-8 rounded-full hover:bg-indigo-700">
+                        Add/Update Book
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Book Requests Notifications -->
+        <section class="bg-primary-color text-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4">Book Requests</h2>
+            <div id="request-notifications" class="space-y-4">
+                <!-- Book request notifications will appear here -->
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        const toggleTheme = () => {
+            const currentMode = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            document.body.classList.toggle('dark-mode', currentMode === 'light');
+        };
+
+        // Handle Book Request Notifications (for admin view)
+        const bookRequests = [
+            { bookName: 'Physics for JEE', author: 'John Doe', section: 'JEE' },
+            { bookName: 'Biology Basics', author: 'Jane Doe', section: 'NEET' },
+        ];
+
+        const requestNotifications = document.getElementById('request-notifications');
+        bookRequests.forEach(request => {
+            const notification = document.createElement('div');
+            notification.classList.add('bg-white', 'text-black', 'p-4', 'rounded-lg', 'shadow-md');
+            notification.innerHTML = `
+                <strong>Request: </strong> ${request.bookName} by ${request.author} for ${request.section}.`;
+            requestNotifications.appendChild(notification);
+        });
+
+        // Handle Book Form Submission
+        const form = document.getElementById('book-form');
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const section = document.getElementById('section').value;
+            const bookName = document.getElementById('book-name').value;
+            const author = document.getElementById('book-author').value;
+            const downloadLink = document.getElementById('download-link').value;
+            const coverImage = document.getElementById('cover-image').files[0];
+            const tags = document.getElementById('tags').value.split(',');
+
+            const newBook = {
+                section,
+                bookName,
+                author,
+                downloadLink,
+                coverImage: URL.createObjectURL(coverImage),
+                tags
+            };
+
+            // Store or upload the book data as needed
+            localStorage.setItem('newBook', JSON.stringify(newBook));
+            alert('Book added/updated successfully!');
+        });
+    </script>
+</body>
+
+</html>

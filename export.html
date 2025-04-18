@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📤 Export GEN-Z-LIBRARY Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="https://img.icons8.com/color/48/export.png" />
+  <style>
+    body {
+      background: linear-gradient(to right, #1e3a8a, #9333ea);
+      font-family: 'Segoe UI', sans-serif;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center text-white">
+
+  <div class="bg-white/10 p-8 rounded-2xl shadow-xl w-full max-w-md text-center border border-white/20">
+    <img src="https://img.icons8.com/ios-filled/100/export.png" alt="Export" class="mx-auto mb-4 opacity-80" />
+    <h1 class="text-3xl font-bold mb-2">Export Data</h1>
+    <p class="text-sm mb-6 text-gray-200">Download all stored books and developer data as a JSON file.</p>
+
+    <button 
+      onclick="exportData()" 
+      class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-blue-700 hover:to-purple-700 transition duration-300 text-white font-semibold py-2 px-6 rounded-full shadow-md">
+      📤 Download JSON
+    </button>
+
+    <p class="mt-6 text-xs text-gray-300">Made with ❤️ by GEN-Z-ARSH</p>
+  </div>
+
+  <script>
+    function exportData() {
+      const books = JSON.parse(localStorage.getItem("books")) || [];
+      const devs = JSON.parse(localStorage.getItem("devs")) || [];
+
+      const data = { books, devs };
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "GEN-Z-LIBRARY-EXPORT.json";
+      link.click();
+    }
+  </script>
+
+</body>
+</html>
